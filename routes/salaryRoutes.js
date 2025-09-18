@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyJWT } from "../middlewares/auth.js";
 import {
+  downloadSalarySlip,
   getSalaryByEmployeeAndYear,
   getSalaryDetailsByEmployeeMonthYear,
 } from "../controllers/salaryController.js";
@@ -13,5 +14,5 @@ router.get(
   verifyJWT(),
   getSalaryDetailsByEmployeeMonthYear
 );
-
+router.get("/download-salary-slip/:employeeId", downloadSalarySlip)
 export default router;
