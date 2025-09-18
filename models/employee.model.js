@@ -11,7 +11,7 @@ const employeeSchema = new mongoose.Schema(
 
     employeeId: {
       type: String,
-      unique: true,
+      // unique: true,
       sparse: true,
     },
 

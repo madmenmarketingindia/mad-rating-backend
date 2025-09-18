@@ -141,11 +141,10 @@ const getEmployeeRatings = async (req, res) => {
 
     // Build query object
     let query = {};
-
     if (month) query.month = Number(month);
     if (year) query.year = Number(year);
 
-    // If searching by employee name
+    // Employee name filter
     let employeeFilter = {};
     if (name) {
       employeeFilter = {
@@ -156,7 +155,6 @@ const getEmployeeRatings = async (req, res) => {
       };
     }
 
-    // First find employees matching name filter
     const employees = await Employee.find(employeeFilter).select(
       "_id firstName lastName email"
     );
@@ -166,24 +164,96 @@ const getEmployeeRatings = async (req, res) => {
       query.employeeId = { $in: employeeIds };
     }
 
-    // Fetch ratings with employee details populated
+    // Fetch all ratings for these employees
     const ratings = await Rating.find(query)
-      .populate("employeeId", "firstName lastName email officialDetails, _id")
-      .populate("reviewerId", "username email")
-      .sort({ year: -1, month: -1 });
+      .populate("employeeId", "_id firstName lastName email")
+      .sort({ employeeId: 1, year: -1, month: -1 });
 
-    return res
-      .status(200)
-      .json(
-        apiResponseSuccess(
-          ratings,
-          true,
-          statusCode.success,
-          "Employee ratings fetched successfully!"
-        )
-      );
+    // Group ratings by employee and calculate average
+    const employeeMap = {};
+
+    ratings.forEach((r) => {
+      const empId = r.employeeId._id.toString();
+
+      if (!employeeMap[empId]) {
+        employeeMap[empId] = {
+          employeeId: r.employeeId,
+          categories: {
+            ethics: 0,
+            discipline: 0,
+            workEthics: 0,
+            output: 0,
+            teamPlay: 0,
+            leadership: 0,
+            extraMile: 0,
+          },
+          totalMonths: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+
+      const cat = r.categories;
+
+      employeeMap[empId].categories.ethics += cat.ethics;
+      employeeMap[empId].categories.discipline += cat.discipline;
+      employeeMap[empId].categories.workEthics += cat.workEthics;
+      employeeMap[empId].categories.output += cat.output;
+      employeeMap[empId].categories.teamPlay += cat.teamPlay;
+      employeeMap[empId].categories.leadership += cat.leadership;
+      employeeMap[empId].categories.extraMile += cat.extraMile;
+
+      employeeMap[empId].totalMonths += 1;
+    });
+
+    // Convert to array and calculate average per category
+    const result = Object.values(employeeMap).map((e) => {
+      const months = e.totalMonths;
+
+      const categories = {
+        ethics: +(e.categories.ethics / months).toFixed(2),
+        discipline: +(e.categories.discipline / months).toFixed(2),
+        workEthics: +(e.categories.workEthics / months).toFixed(2),
+        output: +(e.categories.output / months).toFixed(2),
+        teamPlay: +(e.categories.teamPlay / months).toFixed(2),
+        leadership: +(e.categories.leadership / months).toFixed(2),
+        extraMile: +(e.categories.extraMile / months).toFixed(2),
+      };
+
+      const averageScore = +(
+        (categories.ethics +
+          categories.discipline +
+          categories.workEthics +
+          categories.output +
+          categories.teamPlay +
+          categories.leadership +
+          categories.extraMile) /
+        7
+      ).toFixed(2);
+
+      return {
+        _id: e.employeeId._id,
+        employeeId: e.employeeId,
+        categories,
+        averageScore,
+        totalMonths: months,
+      };
+    });
+
+    return res.status(200).json({
+      data: result,
+      success: true,
+      successCode: 200,
+      message: "Employee ratings fetched successfully!",
+      pagination: null,
+    });
   } catch (error) {
-    return res.status(500).json(new apiError(500, error.message));
+    return res.status(500).json({
+      statusCode: 500,
+      message: error.message,
+      success: false,
+      errors: [],
+    });
   }
 };
 
