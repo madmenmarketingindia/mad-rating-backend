@@ -28,6 +28,7 @@ app.use(helmet());
 // app.use(cors({ origin: "*", credentials: true }));
 
 const allowedOrigins = [
+  "https://mad-rating-backend.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
   "http://192.168.0.111:5173",
