@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use(cookieParser());
 app.use(helmet());
-// app.use(cors({ origin: "*", credentials: true }));
+
 
 const allowedOrigins = [
   "https://mad-rating-backend.vercel.app",
