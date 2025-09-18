@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 0px;
+            border-radius: 12px;
+        }
+
+        .card img {
+            height: 100px;
+            width: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+    {{#influencers}}
+    <div class="card">
+        <h2>{{name}}</h2>
+        <p><strong>Platform:</strong> {{platform}}</p>
+        <p><strong>Followers:</strong> {{followers}}</p>
+        <p><strong>ER:</strong> {{er}}</p>
+        <p><strong>Location:</strong> {{location}}</p>
+        <p><strong>Category:</strong> {{category}}</p>
+        <p><strong>Contact:</strong> {{contact}}</p>
+    </div>
+    <div style="page-break-after: always;"></div>
+    {{/influencers}}
+</body>
+
+</html>
