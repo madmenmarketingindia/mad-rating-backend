@@ -6,6 +6,7 @@ import {
   getDepartmentStats,
   getEmployeeMonthlyRating,
   getEmployeeYearlyRatings,
+  getTeamYearlyRatings,
   getWorkAnniversariesByMonth,
 } from "../controllers/dashboard.js";
 
@@ -17,5 +18,7 @@ router.get("/birthdays", verifyJWT(), getBirthdaysByMonth);
 router.get("/workAnniversary", verifyJWT(), getWorkAnniversariesByMonth);
 router.get("/employee", verifyJWT(), getEmployeeMonthlyRating);
 router.get("/employee-yearly-ratings", verifyJWT(), getEmployeeYearlyRatings);
+router.get("/team-yearly-ratings", verifyJWT(), getTeamYearlyRatings);
+
 
 export default router;

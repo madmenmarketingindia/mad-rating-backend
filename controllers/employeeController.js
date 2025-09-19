@@ -48,11 +48,33 @@ const getEmployees = async (req, res) => {
       "username email role"
     );
 
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+
+    // get all ratings for current month in one query
+    const ratings = await Rating.find({ month, year }).select(
+      "employeeId averageScore"
+    );
+
+    // map employeeId -> avgScore
+    const ratingsMap = ratings.reduce((acc, r) => {
+      acc[r.employeeId.toString()] = r.averageScore;
+      return acc;
+    }, {});
+
+    // attach currentMonthAvg to each employee object
+    const employeesWithRating = employees.map((emp) => {
+      const empObj = emp.toObject();
+      empObj.currentMonthAvg = ratingsMap[emp._id.toString()] || null;
+      return empObj;
+    });
+
     return res
       .status(200)
       .json(
         apiResponseSuccess(
-          employees,
+          employeesWithRating,
           true,
           statusCode.success,
           "Employees fetched successfully!"

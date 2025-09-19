@@ -512,6 +512,81 @@ const getEmployeeYearlyRatings = async (req, res) => {
   }
 };
 
+const getTeamYearlyRatings = async (req, res) => {
+  try {
+    let { year } = req.query;
+    const now = new Date();
+    year = Number(year) || now.getFullYear();
+
+    // Step 1: Aggregate by department + month
+    const ratings = await Rating.aggregate([
+      { $match: { year } },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "employeeId",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      { $unwind: "$employee" },
+      {
+        $group: {
+          _id: {
+            department: "$employee.officialDetails.department",
+            month: "$month",
+          },
+          avgRating: { $avg: "$averageScore" },
+        },
+      },
+      {
+        $project: {
+          department: "$_id.department",
+          month: "$_id.month",
+          avgRating: { $round: ["$avgRating", 2] },
+          _id: 0,
+        },
+      },
+      { $sort: { month: 1 } },
+    ]);
+
+    // Step 2: Get unique departments
+    const departments = [...new Set(ratings.map((r) => r.department))];
+
+    // Step 3: Ensure all 12 months exist for each department
+    const result = departments.flatMap((dept) => {
+      const deptRatings = ratings.filter((r) => r.department === dept);
+      const map = {};
+      deptRatings.forEach((r) => {
+        map[r.month] = r.avgRating;
+      });
+
+      return Array.from({ length: 12 }, (_, i) => {
+        const month = i + 1;
+        return {
+          department: dept || "N/A",
+          month,
+          avgRating: map[month] || 0,
+        };
+      });
+    });
+
+    return res
+      .status(200)
+      .json(
+        apiResponseSuccess(
+          result,
+          true,
+          statusCode.success,
+          `Team average ratings for ${year} fetched successfully!`
+        )
+      );
+  } catch (error) {
+    console.error("Error in getTeamYearlyRatings:", error);
+    return res.status(500).json(new apiError(500, error.message));
+  }
+};
+
 export {
   getDepartmentStats,
   getDepartmentRatings,
@@ -519,4 +594,5 @@ export {
   getWorkAnniversariesByMonth,
   getEmployeeMonthlyRating,
   getEmployeeYearlyRatings,
+  getTeamYearlyRatings,
 };
