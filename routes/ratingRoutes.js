@@ -6,6 +6,7 @@ import {
   getEmployeeYearlyRatings,
   getRatingHistory,
   getSingleMonthRating,
+  getTeamWiseRatings,
   upsertMonthlyRating,
 } from "../controllers/ratingController.js";
 
@@ -21,5 +22,6 @@ router.get(
   getSingleMonthRating
 );
 router.get("/yearly-rating/:employeeId", verifyJWT(), getEmployeeYearlyRatings);
+router.get("/team-wise-rating", verifyJWT(), getTeamWiseRatings);
 
 export default router;
