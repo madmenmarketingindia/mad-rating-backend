@@ -8,13 +8,39 @@ const departmentSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    status: {
-      type: String,
-      enum: ["Active", "Inactive"],
-      default: "Active",
-    },
+    description: { type: String },
+
+    designations: [
+      {
+        title: { type: String, required: false },
+      },
+    ],
+
+    employees: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Employee",
+      },
+    ],
+
+    // ratings summary (monthly, yearly)
+    ratings: [
+      {
+        month: { type: Number },
+        year: { type: Number },
+        avgEthics: Number,
+        avgDiscipline: Number,
+        avgWorkEthics: Number,
+        avgOutput: Number,
+        avgTeamPlay: Number,
+        avgLeadership: Number,
+        avgExtraMile: Number,
+        avgOverall: Number,
+      },
+    ],
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Department", departmentSchema);
+const Department = mongoose.model("Department", departmentSchema);
+export default Department;

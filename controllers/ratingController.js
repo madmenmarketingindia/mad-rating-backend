@@ -384,6 +384,112 @@ const getEmployeeYearlyRatings = async (req, res) => {
   }
 };
 
+const getTeamWiseRatings = async (req, res) => {
+  try {
+    let { month, year } = req.query;
+
+    const now = new Date();
+    month = month ? Number(month) : now.getMonth() + 1;
+    year = year ? Number(year) : now.getFullYear();
+
+    const teamRatings = await Rating.aggregate([
+      {
+        $match: { month, year },
+      },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "employeeId",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      { $unwind: "$employee" },
+
+      // ✅ First group at employee level
+      {
+        $group: {
+          _id: "$employee._id",
+          department: { $first: "$employee.officialDetails.department" },
+          firstName: { $first: "$employee.firstName" },
+          lastName: { $first: "$employee.lastName" },
+          designation: { $first: "$employee.officialDetails.designation" },
+
+          avgEthics: { $avg: "$categories.ethics" },
+          avgDiscipline: { $avg: "$categories.discipline" },
+          avgWorkEthics: { $avg: "$categories.workEthics" },
+          avgOutput: { $avg: "$categories.output" },
+          avgTeamPlay: { $avg: "$categories.teamPlay" },
+          avgLeadership: { $avg: "$categories.leadership" },
+          avgExtraMile: { $avg: "$categories.extraMile" },
+          avgOverall: { $avg: "$averageScore" },
+        },
+      },
+
+      // ✅ Then group at department level
+      {
+        $group: {
+          _id: "$department",
+          avgEthics: { $avg: "$avgEthics" },
+          avgDiscipline: { $avg: "$avgDiscipline" },
+          avgWorkEthics: { $avg: "$avgWorkEthics" },
+          avgOutput: { $avg: "$avgOutput" },
+          avgTeamPlay: { $avg: "$avgTeamPlay" },
+          avgLeadership: { $avg: "$avgLeadership" },
+          avgExtraMile: { $avg: "$avgExtraMile" },
+          avgOverall: { $avg: "$avgOverall" },
+
+          employees: {
+            $push: {
+              employeeId: "$_id",
+              firstName: "$firstName",
+              lastName: "$lastName",
+              designation: "$designation",
+              avgOverall: { $round: ["$avgOverall", 2] }, // 👈 each employee’s personal avg
+            },
+          },
+          totalEmployees: { $sum: 1 },
+        },
+      },
+
+      // ✅ Clean projection
+      {
+        $project: {
+          department: "$_id",
+          _id: 0,
+          avgEthics: { $round: ["$avgEthics", 2] },
+          avgDiscipline: { $round: ["$avgDiscipline", 2] },
+          avgWorkEthics: { $round: ["$avgWorkEthics", 2] },
+          avgOutput: { $round: ["$avgOutput", 2] },
+          avgTeamPlay: { $round: ["$avgTeamPlay", 2] },
+          avgLeadership: { $round: ["$avgLeadership", 2] },
+          avgExtraMile: { $round: ["$avgExtraMile", 2] },
+          avgOverall: { $round: ["$avgOverall", 2] },
+          employees: 1,
+          totalEmployees: 1,
+        },
+      },
+      { $sort: { department: 1 } },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: "Department-wise ratings fetched successfully!",
+      data: {
+        month,
+        year,
+        departments: teamRatings,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export {
   upsertMonthlyRating,
   getCurrentRating,
@@ -391,4 +497,5 @@ export {
   getEmployeeRatings,
   getSingleMonthRating,
   getEmployeeYearlyRatings,
+  getTeamWiseRatings,
 };
