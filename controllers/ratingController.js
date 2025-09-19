@@ -3,6 +3,7 @@ import { apiError } from "../utils/apiError.js";
 import { apiResponseSuccess } from "../helper/serverError.js";
 import { statusCode } from "../helper/statusCodes.js";
 import Employee from "../models/employee.model.js";
+import mongoose from "mongoose";
 
 const upsertMonthlyRating = async (req, res) => {
   try {
@@ -320,10 +321,74 @@ const getSingleMonthRating = async (req, res) => {
   }
 };
 
+const getEmployeeYearlyRatings = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    const { year } = req.query;
+
+    if (!employeeId) {
+      return res.status(400).json({ message: "Employee ID is required" });
+    }
+
+    const selectedYear = year ? parseInt(year) : new Date().getFullYear();
+
+    // Aggregate by month using averageScore
+    const ratings = await Rating.aggregate([
+      {
+        $match: {
+          employeeId: new mongoose.Types.ObjectId(employeeId),
+          year: selectedYear,
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          avgRating: { $avg: "$averageScore" }, // use averageScore field
+        },
+      },
+      {
+        $project: {
+          month: "$_id",
+          avgRating: { $round: ["$avgRating", 2] },
+          _id: 0,
+        },
+      },
+      { $sort: { month: 1 } },
+    ]);
+
+    // Fill missing months with 0
+    const monthlyData = Array.from({ length: 12 }, (_, i) => {
+      const monthData = ratings.find((r) => r.month === i + 1);
+      return {
+        month: i + 1,
+        avgRating: monthData ? monthData.avgRating : 0,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      successCode: 200,
+      message: "Employee yearly rating data fetched successfully!",
+      data: {
+        employeeId,
+        year: selectedYear,
+        ratings: monthlyData,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export {
   upsertMonthlyRating,
   getCurrentRating,
   getRatingHistory,
   getEmployeeRatings,
   getSingleMonthRating,
+  getEmployeeYearlyRatings,
 };
