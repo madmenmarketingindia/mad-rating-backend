@@ -230,6 +230,62 @@ const getEmployeeProfile = async (req, res) => {
   }
 };
 
+const getEmployeesByDepartment = async (req, res) => {
+  try {
+    const { department } = req.query;
+
+    if (!department) {
+      return res.status(400).json(new apiError(400, "Department is required"));
+    }
+
+    const employees = await Employee.find({
+      "officialDetails.department": department,
+    }).select("firstName lastName email officialDetails.department");
+
+    if (!employees || employees.length === 0) {
+      return res
+        .status(404)
+        .json(new apiError(404, "No employees found in this department"));
+    }
+
+    return res
+      .status(200)
+      .json(
+        apiResponseSuccess(
+          employees,
+          true,
+          statusCode.success,
+          "Employees fetched successfully"
+        )
+      );
+  } catch (error) {
+    return res.status(500).json(new apiError(500, error.message));
+  }
+};
+
+const getAllDepartments = async (req, res) => {
+  try {
+    const departments = await Employee.distinct("officialDetails.department");
+
+    if (!departments || departments.length === 0) {
+      return res.status(404).json(new apiError(404, "No departments found"));
+    }
+
+    return res
+      .status(200)
+      .json(
+        apiResponseSuccess(
+          departments,
+          true,
+          statusCode.success,
+          "Departments fetched successfully"
+        )
+      );
+  } catch (error) {
+    return res.status(500).json(new apiError(500, error.message));
+  }
+};
+
 export {
   createEmployee,
   getEmployees,
@@ -237,4 +293,6 @@ export {
   updateEmployee,
   deleteEmployee,
   getEmployeeProfile,
+  getEmployeesByDepartment,
+  getAllDepartments,
 };
