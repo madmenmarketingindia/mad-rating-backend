@@ -49,17 +49,17 @@ const upsertPayroll = async (req, res) => {
     // keep present in 0.5 increments
     const present = Math.round(rawPresent * 2) / 2;
 
-    // 4) lateAdjusted restores 0.5 day per adjusted late (can't adjust more than lateIn)
+    // lateAdjusted restores 0.5 day per adjusted late (can't adjust more than lateIn)
     const usableLateAdjusted = Math.min(lateAdjusted, lateIn);
     const lateAdjustedDays = usableLateAdjusted * 0.5;
 
-    // 5) payableDays = present + restored leave adjustments? (we already applied leaveAdjusted by reducing leaves)
+    //  payableDays = present + restored leave adjustments? (we already applied leaveAdjusted by reducing leaves)
     // so we only add restored late days here
     let rawPayableDays = present + lateAdjustedDays;
     if (rawPayableDays < 0) rawPayableDays = 0;
     const payableDays = Math.round(rawPayableDays * 2) / 2; // keep 0.5 increments
 
-    // 6) salary calculations
+    // salary calculations
     const perDaySalary =
       totalWorkingDays > 0 ? baseSalary / totalWorkingDays : 0;
     let calculatedPayable = perDaySalary * payableDays;
