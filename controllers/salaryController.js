@@ -153,12 +153,13 @@ const getSalaryByEmployeeAndYear = async (req, res) => {
       const baseSalary = payroll.basicSalary || 0;
       const incentive = payroll.incentive || 0;
       const netPay = payroll.total || baseSalary + incentive;
+      const salary = payroll.salary;
 
       salaryData.months.push({
         month: payroll.month,
         year: payroll.year,
         baseSalary,
-        salary: payroll.salary,
+        salary: salary,
         averageRating: 0,
         incentivePercent:
           payroll.incentive && baseSalary
