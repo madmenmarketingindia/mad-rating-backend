@@ -35,11 +35,11 @@ const upsertPayroll = async (req, res) => {
     const baseSalary = salary ?? employee.salary ?? 0;
     const totalWorkingDays = totalDays ?? 0;
 
-    // 1) apply leaveAdjusted by reducing leaves (can't adjust more than leaves)
+    // apply leaveAdjusted by reducing leaves (can't adjust more than leaves)
     const usableLeaveAdjusted = Math.min(leaveAdjusted, leaves);
     const remainingLeaves = Math.max(0, leaves - usableLeaveAdjusted);
 
-    // 2) each lateIn counts as 0.5 day absent
+    //  each lateIn counts as 0.5 day absent
     const lateDays = (lateIn ?? 0) * 0.5;
 
     // 3) calculate present (after reducing remaining leaves and lateDays)
