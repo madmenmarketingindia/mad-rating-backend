@@ -10,7 +10,10 @@ const AttendancePayrollSchema = new Schema(
     },
     month: { type: Number, required: true },
     year: { type: Number, required: true },
-
+    basicSalary: { type: Number, required: true },
+    hra: { type: Number, required: true },
+    medicalAllowance: { type: Number, required: true },
+    conveyanceAllowance: { type: Number, required: true },
     // Salary Info (manual override allowed)
     salary: { type: Number, required: true },
     totalDays: { type: Number, required: true },

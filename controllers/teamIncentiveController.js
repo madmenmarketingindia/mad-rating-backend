@@ -236,7 +236,6 @@ const updateIncentive = async (req, res) => {
   try {
     const { incentiveId } = req.params;
     const { team, memberIds, totalAmount, month, year } = req.body;
-
     if (!incentiveId) {
       return res
         .status(400)
