@@ -188,6 +188,10 @@ export const generateSalarySlipHTML = ({
         <tr><td>E.S.I.</td><td class="right">-</td></tr>
          <tr><td>Professional Tax</td><td class="right">-</td></tr>      
          <tr><td>T.D.S.</td><td class="right">-</td></tr>
+         <tr><td>Deduction</td><td class="right">${
+           salary.deductions ?? 0
+         }</td></tr>
+
       </table>
     </div>
 
