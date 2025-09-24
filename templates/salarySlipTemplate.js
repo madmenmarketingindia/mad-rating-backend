@@ -64,7 +64,6 @@
 // </html>
 // `;
 
-// utils/generateSalarySlipHTML.js
 export const generateSalarySlipHTML = ({
   employee,
   salary,
