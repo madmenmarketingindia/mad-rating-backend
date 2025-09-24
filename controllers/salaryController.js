@@ -825,7 +825,7 @@ const downloadSalarySlip = async (req, res) => {
 
     const rating = await Rating.findOne({ employeeId, month, year });
 
-    // Convert AttendancePayroll to "salary" object for HTML
+    // Prepare salary object
     const salary = {
       basicSalary: payroll.basicSalary ?? 0,
       hra: payroll.hra ?? 0,
@@ -840,14 +840,11 @@ const downloadSalarySlip = async (req, res) => {
       modeOfPayment: payroll.modeOfPayment ?? 'NEFT',
     };
 
-    // Generate HTML
     const htmlContent = generateSalarySlipHTML({ employee, salary, rating, month, year });
 
-    // PDF options
-    const options = { format: 'A4', printBackground: true };
     const file = { content: htmlContent };
+    const options = { format: 'A4', printBackground: true };
 
-    // Generate PDF
     const pdfBuffer = await pdf.generatePdf(file, options);
 
     res.writeHead(200, {
@@ -855,8 +852,8 @@ const downloadSalarySlip = async (req, res) => {
       'Content-Disposition': `attachment; filename=SalarySlip-${employee.firstName}-${month}-${year}.pdf`,
       'Content-Length': pdfBuffer.length,
     });
-
     res.end(pdfBuffer);
+
   } catch (error) {
     console.error('Download Salary Slip Error:', error);
     return res.status(500).json(new apiError(500, error.message));
