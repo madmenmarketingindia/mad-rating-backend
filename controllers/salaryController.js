@@ -4,12 +4,8 @@ import { apiResponseSuccess } from "../helper/serverError.js";
 import { statusCode } from "../helper/statusCodes.js";
 import Employee from "../models/employee.model.js";
 import AttendancePayroll from "../models/AttendancePayroll.js";
-import PDFDocument from "pdfkit";
 import { generateSalarySlipHTML } from "../templates/salarySlipTemplate.js";
-import puppeteer from "puppeteer";
-import chromium from "chrome-aws-lambda";
-import pdf from 'html-pdf-node';
-
+import pdf from "html-pdf-node";
 
 // const getSalaryByEmployeeAndYear = async (req, res) => {
 //   try {
@@ -701,105 +697,6 @@ const getSalaryDetailsByEmployeeMonthYear = async (req, res) => {
 //   }
 // };
 
-const downloadSalarySlip1 = async (req, res) => {
-  try {
-    const { employeeId } = req.params;
-    let { month, year } = req.query;
-
-    if (!employeeId) {
-      return res.status(400).json(new apiError(400, "Employee ID is required"));
-    }
-
-    const now = new Date();
-    month = Number(month) || now.getMonth() + 1;
-    year = Number(year) || now.getFullYear();
-
-    // 1. Get employee
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
-      return res.status(404).json(new apiError(404, "Employee not found"));
-    }
-
-    // 2. Get payroll
-    const payroll = await AttendancePayroll.findOne({
-      employeeId,
-      month,
-      year,
-    });
-    if (!payroll) {
-      return res.status(404).json(new apiError(404, "Payroll not found"));
-    }
-
-    // 3. Get rating
-    const rating = await Rating.findOne({ employeeId, month, year });
-
-    // 4. Convert AttendancePayroll → salary format
-    const salary = {
-      month: payroll.month,
-      year: payroll.year,
-      salary: payroll.salary ?? 0,
-      basicSalary: payroll.basicSalary ?? 0,
-      hra: payroll.hra ?? 0,
-      medicalAllowance: payroll.medicalAllowance ?? 0,
-      conveyanceAllowance: payroll.conveyanceAllowance ?? 0,
-      totalDays: payroll.totalDays ?? 0,
-      payableDays: payroll.payableDays ?? 0,
-      leaves: payroll.leaves ?? 0,
-      leaveAdjusted: payroll.leaveAdjusted ?? 0,
-      absent: payroll.absent ?? 0,
-      lateIn: payroll.lateIn ?? 0,
-      lateAdjusted: payroll.lateAdjusted ?? 0,
-      deductions: payroll.deductions ?? 0,
-      reimbursement: payroll.reimbursement ?? 0,
-      incentivePercent: payroll.incentive
-        ? ((payroll.incentive / (payroll.salary || 1)) * 100).toFixed(2)
-        : 0,
-      incentiveAmount: payroll.incentive ?? 0,
-      teamIncentive: payroll.teamIncentive ?? 0,
-      netPay: payroll.total ?? 0,
-      status: payroll.status,
-      modeOfPayment: payroll.modeOfPayment ?? "NEFT",
-    };
-
-    // 5. Generate HTML
-    const htmlContent = generateSalarySlipHTML({
-      employee,
-      salary,
-      rating,
-      month,
-      year,
-    });
-
-    // 6. Generate PDF with Playwright
-    const browser = await chromium.launch({
-      headless: true,
-    });
-
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "networkidle" });
-
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-    });
-
-    await browser.close();
-
-    // 7. Send PDF
-    res.writeHead(200, {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=SalarySlip-${
-        employee.firstName || "Employee"
-      }-${month}-${year}.pdf`,
-      "Content-Length": pdfBuffer.length,
-    });
-    res.end(pdfBuffer);
-  } catch (error) {
-    console.error("Download Salary Slip Error:", error);
-    return res.status(500).json(new apiError(500, error.message));
-  }
-};
-
 const downloadSalarySlip = async (req, res) => {
   try {
     const { employeeId } = req.params;
@@ -818,7 +715,11 @@ const downloadSalarySlip = async (req, res) => {
       return res.status(404).json(new apiError(404, "Employee not found"));
     }
 
-    const payroll = await AttendancePayroll.findOne({ employeeId, month, year });
+    const payroll = await AttendancePayroll.findOne({
+      employeeId,
+      month,
+      year,
+    });
     if (!payroll) {
       return res.status(404).json(new apiError(404, "Payroll not found"));
     }
@@ -837,25 +738,30 @@ const downloadSalarySlip = async (req, res) => {
       leaveAdjusted: payroll.leaveAdjusted ?? 0,
       deductions: payroll.deductions ?? 0,
       netPay: payroll.total ?? 0,
-      modeOfPayment: payroll.modeOfPayment ?? 'NEFT',
+      modeOfPayment: payroll.modeOfPayment ?? "NEFT",
     };
 
-    const htmlContent = generateSalarySlipHTML({ employee, salary, rating, month, year });
+    const htmlContent = generateSalarySlipHTML({
+      employee,
+      salary,
+      rating,
+      month,
+      year,
+    });
 
     const file = { content: htmlContent };
-    const options = { format: 'A4', printBackground: true };
+    const options = { format: "A4", printBackground: true };
 
     const pdfBuffer = await pdf.generatePdf(file, options);
 
     res.writeHead(200, {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename=SalarySlip-${employee.firstName}-${month}-${year}.pdf`,
-      'Content-Length': pdfBuffer.length,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=SalarySlip-${employee.firstName}-${month}-${year}.pdf`,
+      "Content-Length": pdfBuffer.length,
     });
     res.end(pdfBuffer);
-
   } catch (error) {
-    console.error('Download Salary Slip Error:', error);
+    console.error("Download Salary Slip Error:", error);
     return res.status(500).json(new apiError(500, error.message));
   }
 };
