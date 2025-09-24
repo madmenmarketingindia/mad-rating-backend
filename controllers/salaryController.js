@@ -7,6 +7,7 @@ import AttendancePayroll from "../models/AttendancePayroll.js";
 import PDFDocument from "pdfkit";
 import { generateSalarySlipHTML } from "../templates/salarySlipTemplate.js";
 import puppeteer from "puppeteer";
+import chromium from "chrome-aws-lambda";
 
 // const getSalaryByEmployeeAndYear = async (req, res) => {
 //   try {
@@ -668,8 +669,16 @@ const downloadSalarySlip = async (req, res) => {
       year,
     });
 
+    // Launch headless Chromium from chrome-aws-lambda
+    const browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath,
+      headless: true,
+    });
+
     // 6. Generate PDF with Puppeteer
-    const browser = await puppeteer.launch({ headless: "new" });
+    // const browser = await puppeteer.launch({ headless: "new" });
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
     const pdfBuffer = await page.pdf({ format: "A4", printBackground: true });
