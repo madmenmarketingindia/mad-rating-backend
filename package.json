@@ -25,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "@react-pdf/renderer": "^4.3.1",
+    "@sparticuz/chromium": "^138.0.2",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -43,6 +44,8 @@
     "npm": "^11.4.1",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.17.2",
+    "puppeteer": "^24.22.2",
+    "puppeteer-core": "^24.22.2",
     "xlsx": "^0.18.5",
     "xss-clean": "^0.1.4"
   }

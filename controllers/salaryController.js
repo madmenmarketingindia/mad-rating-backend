@@ -6,6 +6,9 @@ import Employee from "../models/employee.model.js";
 import AttendancePayroll from "../models/AttendancePayroll.js";
 import { generateSalarySlipHTML } from "../templates/salarySlipTemplate.js";
 import pdf from "html-pdf-node";
+import puppeteer from "puppeteer";
+import puppeteerCore from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 // const getSalaryByEmployeeAndYear = async (req, res) => {
 //   try {
@@ -529,7 +532,77 @@ const getSalaryDetailsByEmployeeMonthYear = async (req, res) => {
   }
 };
 
+// const downloadSalarySlip = async (req, res) => {
+//   try {
+//     const { employeeId } = req.params;
+//     let { month, year } = req.query;
+
+//     if (!employeeId) {
+//       return res.status(400).json(new apiError(400, "Employee ID is required"));
+//     }
+
+//     const now = new Date();
+//     month = Number(month) || now.getMonth() + 1;
+//     year = Number(year) || now.getFullYear();
+
+//     const employee = await Employee.findById(employeeId);
+//     if (!employee) {
+//       return res.status(404).json(new apiError(404, "Employee not found"));
+//     }
+
+//     const payroll = await AttendancePayroll.findOne({
+//       employeeId,
+//       month,
+//       year,
+//     });
+//     if (!payroll) {
+//       return res.status(404).json(new apiError(404, "Payroll not found"));
+//     }
+
+//     const rating = await Rating.findOne({ employeeId, month, year });
+
+//     // Prepare salary object
+//     const salary = {
+//       basicSalary: payroll.basicSalary ?? 0,
+//       hra: payroll.hra ?? 0,
+//       conveyanceAllowance: payroll.conveyanceAllowance ?? 0,
+//       medicalAllowance: payroll.medicalAllowance ?? 0,
+//       incentiveAmount: payroll.incentive ?? 0,
+//       teamIncentive: payroll.teamIncentive ?? 0,
+//       reimbursement: payroll.reimbursement ?? 0,
+//       leaveAdjusted: payroll.leaveAdjusted ?? 0,
+//       deductions: payroll.deductions ?? 0,
+//       netPay: payroll.total ?? 0,
+//       modeOfPayment: payroll.modeOfPayment ?? "NEFT",
+//     };
+
+//     const htmlContent = generateSalarySlipHTML({
+//       employee,
+//       salary,
+//       rating,
+//       month,
+//       year,
+//     });
+
+//     const file = { content: htmlContent };
+//     const options = { format: "A4", printBackground: true };
+
+//     const pdfBuffer = await pdf.generatePdf(file, options);
+
+//     res.writeHead(200, {
+//       "Content-Type": "application/pdf",
+//       "Content-Disposition": `attachment; filename=SalarySlip-${employee.firstName}-${month}-${year}.pdf`,
+//       "Content-Length": pdfBuffer.length,
+//     });
+//     res.end(pdfBuffer);
+//   } catch (error) {
+//     console.error("Download Salary Slip Error:", error);
+//     return res.status(500).json(new apiError(500, error.message));
+//   }
+// };
+
 const downloadSalarySlip = async (req, res) => {
+  let browser = null;
   try {
     const { employeeId } = req.params;
     let { month, year } = req.query;
@@ -558,7 +631,6 @@ const downloadSalarySlip = async (req, res) => {
 
     const rating = await Rating.findOne({ employeeId, month, year });
 
-    // Prepare salary object
     const salary = {
       basicSalary: payroll.basicSalary ?? 0,
       hra: payroll.hra ?? 0,
@@ -581,10 +653,31 @@ const downloadSalarySlip = async (req, res) => {
       year,
     });
 
-    const file = { content: htmlContent };
-    const options = { format: "A4", printBackground: true };
+    // Conditional logic to handle different environments
+    if (process.env.VERCEL_ENV === "production") {
+      // Vercel Production Environment
+      browser = await puppeteerCore.launch({
+        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    } else {
+      // Local Development Environment
+      browser = await puppeteer.launch({
+        headless: true, // Use `false` for visible browser during testing
+      });
+    }
 
-    const pdfBuffer = await pdf.generatePdf(file, options);
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
+    const pdfBuffer = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      displayHeaderFooter: false,
+      margin: { top: 30, right: 30, bottom: 30, left: 30 },
+    });
 
     res.writeHead(200, {
       "Content-Type": "application/pdf",
@@ -595,6 +688,10 @@ const downloadSalarySlip = async (req, res) => {
   } catch (error) {
     console.error("Download Salary Slip Error:", error);
     return res.status(500).json(new apiError(500, error.message));
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 };
 
