@@ -185,7 +185,7 @@ const updateUser = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).select("-password");
+    });
 
     if (!updatedUser) {
       return res.status(404).json(new apiError(404, "User not found"));

@@ -25,7 +25,7 @@ const AttendancePayrollSchema = new Schema(
     lateAdjusted: { type: Number, default: 0 },
     deductions: { type: Number, default: 0 },
     payableDays: { type: Number, default: 0 },
-
+    teamIncentive: { type: Number, default: 0 },
     // Bank info (override allowed)
     bankName: { type: String },
     accountNo: { type: String },

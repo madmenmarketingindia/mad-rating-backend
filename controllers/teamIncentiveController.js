@@ -291,10 +291,62 @@ const deleteTeamIncentive = async (req, res) => {
   }
 };
 
+const getSingleMemberIncentive = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+    let { month, year } = req.query;
+
+    if (!employeeId) {
+      return res.status(400).json(new apiError(400, "Employee ID is required"));
+    }
+
+    const now = new Date();
+    month = month ? Number(month) : now.getMonth() + 1;
+    year = year ? Number(year) : now.getFullYear();
+
+    const incentive = await TeamIncentive.findOne({
+      month,
+      year,
+      "members.employeeId": employeeId,
+    }).populate("members.employeeId", "firstName lastName email");
+
+    if (!incentive) {
+      return res
+        .status(200)
+        .json(
+          apiResponseSuccess(
+            { employeeId, month, year, amount: 0 },
+            true,
+            statusCode.success,
+            "No incentive found for this member, returning 0"
+          )
+        );
+    }
+
+    const member = incentive.members.find(
+      (m) => m.employeeId._id.toString() === employeeId.toString()
+    );
+
+    return res
+      .status(200)
+      .json(
+        apiResponseSuccess(
+          { employeeId, month, year, amount: member ? member.amount : 0 },
+          true,
+          statusCode.success,
+          "Member incentive fetched successfully"
+        )
+      );
+  } catch (error) {
+    return res.status(500).json(new apiError(500, error.message));
+  }
+};
+
 export {
   createIncentive,
   getAllIncentives,
   getSingleTeamIncentive,
   updateIncentive,
   deleteTeamIncentive,
+  getSingleMemberIncentive,
 };

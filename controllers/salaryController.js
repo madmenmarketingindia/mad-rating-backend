@@ -154,6 +154,7 @@ const getSalaryByEmployeeAndYear = async (req, res) => {
       const incentive = payroll.incentive || 0;
       const netPay = payroll.total || baseSalary + incentive;
       const salary = payroll.salary;
+      const teamIncentive = payroll.teamIncentive;
 
       salaryData.months.push({
         month: payroll.month,
@@ -161,6 +162,7 @@ const getSalaryByEmployeeAndYear = async (req, res) => {
         baseSalary,
         salary: salary,
         averageRating: 0,
+        teamIncentive,
         incentivePercent:
           payroll.incentive && baseSalary
             ? Number(((incentive / baseSalary) * 100).toFixed(2))
@@ -526,6 +528,7 @@ const getSalaryDetailsByEmployeeMonthYear = async (req, res) => {
     const baseSalary = payroll.basicSalary || 0;
     const incentive = payroll.incentive || 0;
     const netPay = payroll.total || baseSalary + incentive;
+    const teamIncentive = payroll.teamIncentive || 0;
 
     // Incentive percent
     const incentivePct = baseSalary
@@ -566,6 +569,7 @@ const getSalaryDetailsByEmployeeMonthYear = async (req, res) => {
         absent: payroll.absent || 0,
         lateIn: payroll.lateIn || 0,
         lateAdjusted: payroll.lateAdjusted || 0,
+        teamIncentive,
         deductions: payroll.deductions || 0,
         reimbursement: payroll.reimbursement || 0,
         incentiveAmount: Number(incentive.toFixed(2)),
@@ -649,6 +653,7 @@ const downloadSalarySlip = async (req, res) => {
         ? ((payroll.incentive / (payroll.salary || 1)) * 100).toFixed(2)
         : 0,
       incentiveAmount: payroll.incentive ?? 0,
+      teamIncentive: payroll.teamIncentive ?? 0,
       netPay: payroll.total ?? 0,
       status: payroll.status,
       modeOfPayment: payroll.modeOfPayment ?? "NEFT",
