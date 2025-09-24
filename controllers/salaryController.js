@@ -694,7 +694,6 @@ const downloadSalarySlip = async (req, res) => {
     }
   }
 };
-
 export {
   getSalaryByEmployeeAndYear,
   getSalaryDetailsByEmployeeMonthYear,
