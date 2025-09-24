@@ -86,9 +86,13 @@ export const generateSalarySlipHTML = ({
   const capitalizeWords = (str = "") =>
     str.replace(/\b\w/g, (c) => c.toUpperCase());
 
+  const TotalIncentive =
+    (salary.incentiveAmount ?? 0) + (salary.teamIncentive ?? 0);
+
   const totalAddition =
     (salary.baseSalary ?? 0) +
     (salary.incentiveAmount ?? 0) +
+    (salary.teamIncentive ?? 0) +
     (salary.reimbursement ?? 0);
 
   const totalDeduction = (salary.leaveAdjusted ?? 0) + (salary.deductions ?? 0);
@@ -167,9 +171,9 @@ export const generateSalarySlipHTML = ({
 
 
 
-        <tr><td>Incentive (${salary.incentivePercent ?? 0}%)</td>
+        <tr><td>Incentive</td>
             <td class="right">${(
-              salary.incentiveAmount ?? 0
+              TotalIncentive ?? 0
             ).toLocaleString()}</td></tr>
         <tr><td>Reimbursement</td>
             <td class="right">${(

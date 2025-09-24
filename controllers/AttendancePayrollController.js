@@ -25,6 +25,7 @@ const upsertPayroll = async (req, res) => {
       deductions = 0,
       reimbursement = 0,
       incentive = 0,
+      teamIncentive = 0,
       status,
     } = req.body;
 
@@ -66,7 +67,7 @@ const upsertPayroll = async (req, res) => {
     let finalPayable = calculatedPayable - deductions;
     if (finalPayable < 0) finalPayable = 0;
 
-    let total = finalPayable + reimbursement + incentive;
+    let total = finalPayable + reimbursement + incentive + teamIncentive;
     if (total < 0) total = 0;
 
     // round currency to 2 decimals
@@ -94,6 +95,7 @@ const upsertPayroll = async (req, res) => {
           payable: finalPayable,
           reimbursement,
           incentive,
+          teamIncentive,
           total,
           bankName: employee.bankDetails?.bankName,
           accountNo: employee.bankDetails?.accountNo,
@@ -153,6 +155,7 @@ const listPayrollByEmployees = async (req, res) => {
         medicalAllowance: emp.salary.medicalAllowance || 0,
         conveyanceAllowance: emp.salary.conveyanceAllowance || 0,
         salary: emp.salary?.ctc || 0,
+        teamIncentive: payroll?.teamIncentive || 0,
         // if payroll exists → show, else show defaults
         payableDays: payroll?.payableDays || 0,
         payable: payroll?.payable || 0,
@@ -230,6 +233,7 @@ const getPayrollByEmployee = async (req, res) => {
       incentive: payroll?.incentive || 0,
       payableDays: payroll?.payableDays || 0,
       payable: payroll?.payable || 0,
+      teamIncentive: payroll?.teamIncentive || 0,
       total: payroll?.total || 0,
       status: payroll?.status || "Not Processed",
       month,
