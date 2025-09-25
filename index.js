@@ -16,7 +16,8 @@ import attendancePayrollRoutes from "./routes/AttendancePayrollRoutes.js";
 import salaryRoutes from "./routes/salaryRoutes.js";
 import dashboard from "./routes/dashboard.js";
 import disciplinaryRoutes from "./routes/disciplinaryActionRoutes.js";
-import teamIncentiveRoutes from "./routes/teamIncentiveRoutes.js"
+import teamIncentiveRoutes from "./routes/teamIncentiveRoutes.js";
+import exportDataRoutes from "./routes/exportDataRoutes.js";
 
 import { globalErrorHandler } from "./utils/errorHandler.js";
 
@@ -64,6 +65,7 @@ app.use("/api/v1/salary", salaryRoutes);
 app.use("/api/v1/d", dashboard);
 app.use("/api/v1/disciplinary", disciplinaryRoutes);
 app.use("/api/v1/team", teamIncentiveRoutes);
+app.use("/api/v1/export", exportDataRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
