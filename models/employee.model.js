@@ -40,6 +40,7 @@ const employeeSchema = new mongoose.Schema(
       department: { type: String },
       designation: { type: String },
       joiningDate: { type: Date, default: Date.now },
+      lastWorkingDay: { type: Date },
     },
 
     bankDetails: {
