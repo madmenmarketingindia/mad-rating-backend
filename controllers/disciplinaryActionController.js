@@ -235,29 +235,50 @@ const getSingleDisciplinaryAction = async (req, res) => {
 
 const getUpcomingReviews = async (req, res) => {
   try {
-    // Only admin/HR should access — ensure middleware handles that
-
     const today = new Date();
-    const next7Days = new Date();
-    next7Days.setDate(today.getDate() + 7);
 
-    // Find actions whose reviewEndDate is between today and next 7 days
-    const upcomingReviews = await DisciplinaryAction.find({
-      reviewEndDate: { $gte: today, $lte: next7Days },
-      status: { $ne: "Resolved" }, // exclude already resolved ones
+    // Fetch all actions currently in Review status
+    const reviewPeriodActions = await DisciplinaryAction.find({
+      status: "Review",
     })
       .populate("employeeId", "firstName lastName officialDetails.department")
       .populate("issuedBy", "username email role")
-      .sort({ reviewEndDate: 1 }); // earliest review first
+      .sort({ date: 1 });
+
+    // Map and calculate daysLeft for each action
+    const actionsWithDaysLeft = reviewPeriodActions.map((action) => {
+      let daysLeft = "N/A";
+      let endDate = action.reviewEndDate;
+
+      // If reviewEndDate not set but reviewPeriodDays exists, calculate it
+      if (!endDate && action.reviewPeriodDays && action.reviewPeriodDays > 0) {
+        endDate = new Date(
+          action.date.getTime() + action.reviewPeriodDays * 24 * 60 * 60 * 1000
+        );
+      }
+
+      // Calculate days left if endDate exists
+      if (endDate) {
+        const diff = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+        if (diff < 0) daysLeft = "Expired";
+        else if (diff === 0) daysLeft = "Today";
+        else daysLeft = `${diff} day${diff > 1 ? "s" : ""} left`;
+      }
+
+      return {
+        ...action.toObject(),
+        daysLeft,
+      };
+    });
 
     return res
       .status(200)
       .json(
         apiResponseSuccess(
-          upcomingReviews,
+          actionsWithDaysLeft,
           true,
           statusCode.success,
-          "Upcoming reviews in next 7 days fetched successfully!"
+          "All disciplinary actions in review period fetched successfully!"
         )
       );
   } catch (error) {
