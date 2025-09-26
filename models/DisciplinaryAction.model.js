@@ -17,8 +17,8 @@ const disciplinaryActionSchema = new mongoose.Schema(
     date: { type: Date, default: Date.now },
     status: {
       type: String,
-      enum: ["Active", "Review", "Resolved"],
-      default: "Active",
+      enum: ["Review", "Resolved"],
+      default: "Review",
     },
 
     // Review fields
