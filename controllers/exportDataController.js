@@ -40,7 +40,7 @@ const exportEmployees = async (req, res) => {
       { header: "Conveyance Allowance", key: "conveyance", width: 20 },
       { header: "Other Allowances", key: "otherAllowances", width: 20 },
       { header: "Deductions", key: "deductions", width: 15 },
-      { header: "CTC", key: "ctc", width: 15 },
+      { header: "Salary", key: "ctc", width: 15 },
     ];
 
     // Insert rows
