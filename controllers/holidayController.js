@@ -114,16 +114,16 @@ const deleteHoliday = async (req, res) => {
     return res.status(500).json(new apiError(500, error.message));
   }
 };
-
 const getHolidaysByMonth = async (req, res) => {
   try {
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const month = now.getUTCMonth() + 1;
+    let { month, year } = req.query;
 
-    // Start of month (UTC)
+    const now = new Date();
+    month = Number(month) || now.getUTCMonth() + 1;
+    year = Number(year) || now.getUTCFullYear();
+
+    // Calculate start & end of month
     const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
-    // End of month (UTC)
     const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
     const holidays = await Holiday.find({

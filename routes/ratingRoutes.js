@@ -1,6 +1,7 @@
 import express from "express";
 import { verifyJWT } from "../middlewares/auth.js";
 import {
+  getCompanyRating,
   getCurrentRating,
   getEmployeeRatings,
   getEmployeeYearlyRatings,
@@ -23,5 +24,6 @@ router.get(
 );
 router.get("/yearly-rating/:employeeId", verifyJWT(), getEmployeeYearlyRatings);
 router.get("/team-wise-rating", verifyJWT(), getTeamWiseRatings);
+router.get("/company-rating", verifyJWT(), getCompanyRating);
 
 export default router;

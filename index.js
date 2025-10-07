@@ -19,6 +19,7 @@ import disciplinaryRoutes from "./routes/disciplinaryActionRoutes.js";
 import teamIncentiveRoutes from "./routes/teamIncentiveRoutes.js";
 import exportDataRoutes from "./routes/exportDataRoutes.js";
 import holidayRoutes from "./routes/holidayRoutes.js";
+import FNFSettlementRoutes from "./routes/FNFSettlementRoutes.js";
 
 import { globalErrorHandler } from "./utils/errorHandler.js";
 
@@ -68,6 +69,7 @@ app.use("/api/v1/disciplinary", disciplinaryRoutes);
 app.use("/api/v1/team", teamIncentiveRoutes);
 app.use("/api/v1/export", exportDataRoutes);
 app.use("/api/v1/holiday", holidayRoutes);
+app.use("/api/v1/fnf", FNFSettlementRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

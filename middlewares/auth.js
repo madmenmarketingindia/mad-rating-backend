@@ -29,7 +29,6 @@ export const verifyJWT = () => {
       }
 
       req.user = user;
-      console.log("✅ User authorized, proceeding");
       next();
     } catch (err) {
       console.error("JWT Verification Error:", err.message);

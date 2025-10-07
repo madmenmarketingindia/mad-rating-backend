@@ -490,6 +490,73 @@ const getTeamWiseRatings = async (req, res) => {
   }
 };
 
+const getCompanyRating = async (req, res) => {
+  try {
+    let { month, year } = req.query;
+
+    const now = new Date();
+    month = month ? Number(month) : now.getMonth() + 1;
+    year = year ? Number(year) : now.getFullYear();
+
+    // Step 1: Compute department-wise avgOverall first
+    const departmentRatings = await Rating.aggregate([
+      { $match: { month, year } },
+      {
+        $lookup: {
+          from: "employees",
+          localField: "employeeId",
+          foreignField: "_id",
+          as: "employee",
+        },
+      },
+      { $unwind: "$employee" },
+      {
+        $group: {
+          _id: "$employee.officialDetails.department",
+          avgOverall: { $avg: "$averageScore" },
+        },
+      },
+    ]);
+
+    if (!departmentRatings.length) {
+      return res.status(200).json({
+        success: true,
+        message: "No ratings found for this month/year",
+        data: { month, year, companyRating: 0 },
+      });
+    }
+
+    // Step 2: Average all department avgOverall for company rating
+    const totalAvg = departmentRatings.reduce(
+      (acc, dept) => acc + dept.avgOverall,
+      0
+    );
+    const companyRating = Number(
+      (totalAvg / departmentRatings.length).toFixed(2)
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Company rating fetched successfully!",
+      data: {
+        month,
+        year,
+        companyRating,
+        departments: departmentRatings.map((d) => ({
+          department: d._id,
+          avgOverall: Number(d.avgOverall.toFixed(2)),
+        })),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export {
   upsertMonthlyRating,
   getCurrentRating,
@@ -498,4 +565,5 @@ export {
   getSingleMonthRating,
   getEmployeeYearlyRatings,
   getTeamWiseRatings,
+  getCompanyRating,
 };
