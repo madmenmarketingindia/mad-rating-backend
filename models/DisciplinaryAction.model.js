@@ -9,8 +9,8 @@ const disciplinaryActionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Warning", "Suspension", "Termination Notice"],
-      default: "Warning",
+      enum: ["Punctuation", "Ethics", "Performance", "Behavior"],
+      default: "",
     },
     reason: { type: String, required: false },
     issuedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

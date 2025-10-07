@@ -121,7 +121,7 @@ const getSalaryByEmployeeAndYear = async (req, res) => {
     const payrolls = await AttendancePayroll.find({
       employeeId,
       year,
-      status: "Paid", // only consider Paid payrolls
+      status: { $in: ["Paid", "Pending"] }, // only consider Paid payrolls
     }).sort({ month: 1 });
 
     if (!payrolls.length) {
@@ -165,6 +165,7 @@ const getSalaryByEmployeeAndYear = async (req, res) => {
         salary: salary,
         averageRating: 0,
         teamIncentive,
+        incentive,
         incentivePercent:
           payroll.incentive && baseSalary
             ? Number(((incentive / baseSalary) * 100).toFixed(2))

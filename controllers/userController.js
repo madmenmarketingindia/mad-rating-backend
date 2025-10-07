@@ -46,7 +46,6 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
 // *-----login controller ----*
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log("Login request received:", { email, password });
 
   if (!email) {
     throw new apiError(400, "username or email is required");
@@ -151,7 +150,7 @@ const createUser = async (req, res) => {
 // Read All Users
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });;
+    const users = await User.find().sort({ createdAt: -1 });
     return res
       .status(200)
       .json(

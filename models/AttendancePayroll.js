@@ -26,12 +26,28 @@ const AttendancePayrollSchema = new Schema(
     deductions: { type: Number, default: 0 },
     payableDays: { type: Number, default: 0 },
     teamIncentive: { type: Number, default: 0 },
+    individualIncentive: { type: Number, default: 0 },
+    companyIncentive: { type: Number, default: 0 },
+    enableTeamIncentive: {
+      type: Boolean,
+      default: false,
+    },
+    enableCompanyIncentive: {
+      type: Boolean,
+      default: false,
+    },
+
+    enableIndividualIncentive: {
+      type: Boolean,
+      default: false,
+    },
     // Bank info (override allowed)
     bankName: { type: String },
     accountNo: { type: String },
     ifscCode: { type: String },
 
     // Payment details
+    advanceAmount: { type: Number, default: 0 },
     payable: { type: Number, default: 0 },
     reimbursement: { type: Number, default: 0 },
     incentive: { type: Number, default: 0 },
@@ -40,8 +56,8 @@ const AttendancePayrollSchema = new Schema(
     // Status of payroll
     status: {
       type: String,
-      enum: ["Pending", "Processed", "Paid"],
-      default: "Pending",
+      enum: ["Not Processed", "Pending", "Processed", "Paid"],
+      default: "Not Processed",
     },
   },
   { timestamps: true }

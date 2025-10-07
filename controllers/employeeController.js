@@ -5,6 +5,7 @@ import { statusCode } from "../helper/statusCodes.js";
 import mongoose from "mongoose";
 import Rating from "../models/rating.model.js";
 import User from "../models/user.model.js";
+import DisciplinaryAction from "../models/DisciplinaryAction.model.js";
 
 const createEmployee = async (req, res) => {
   try {
@@ -41,6 +42,50 @@ const createEmployee = async (req, res) => {
   }
 };
 
+// const getEmployees = async (req, res) => {
+//   try {
+//     const employees = await Employee.find().populate(
+//       "userId",
+//       "username email role"
+//     );
+
+//     const now = new Date();
+//     const month = now.getMonth() + 1;
+//     const year = now.getFullYear();
+
+//     // get all ratings for current month in one query
+//     const ratings = await Rating.find({ month, year }).select(
+//       "employeeId averageScore"
+//     );
+
+//     // map employeeId -> avgScore
+//     const ratingsMap = ratings.reduce((acc, r) => {
+//       acc[r.employeeId.toString()] = r.averageScore;
+//       return acc;
+//     }, {});
+
+//     // attach currentMonthAvg to each employee object
+//     const employeesWithRating = employees.map((emp) => {
+//       const empObj = emp.toObject();
+//       empObj.currentMonthAvg = ratingsMap[emp._id.toString()] || null;
+//       return empObj;
+//     });
+
+//     return res
+//       .status(200)
+//       .json(
+//         apiResponseSuccess(
+//           employeesWithRating,
+//           true,
+//           statusCode.success,
+//           "Employees fetched successfully!"
+//         )
+//       );
+//   } catch (error) {
+//     return res.status(500).json(new apiError(500, error.message));
+//   }
+// };
+
 const getEmployees = async (req, res) => {
   try {
     const employees = await Employee.find().populate(
@@ -52,21 +97,53 @@ const getEmployees = async (req, res) => {
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
 
-    // get all ratings for current month in one query
+    // get all ratings for current month
     const ratings = await Rating.find({ month, year }).select(
       "employeeId averageScore"
     );
 
-    // map employeeId -> avgScore
     const ratingsMap = ratings.reduce((acc, r) => {
       acc[r.employeeId.toString()] = r.averageScore;
       return acc;
     }, {});
 
-    // attach currentMonthAvg to each employee object
-    const employeesWithRating = employees.map((emp) => {
+    // get disciplinary actions
+    const employeeIds = employees.map((e) => e._id);
+    const disciplinaryActions = await DisciplinaryAction.find({
+      employeeId: { $in: employeeIds },
+    })
+      .select("employeeId type reviewEndDate status")
+      .sort({ createdAt: -1 }); // latest first
+
+    // map employeeId -> latest action
+    const actionsMap = disciplinaryActions.reduce((acc, action) => {
+      const key = action.employeeId.toString();
+      if (!acc[key]) {
+        // first (latest) action only
+        let reviewPeriodLeft = null;
+        if (action.reviewEndDate) {
+          const diffMs = new Date(action.reviewEndDate) - new Date();
+          reviewPeriodLeft =
+            diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
+        }
+        acc[key] = {
+          type: action.type,
+          status: action.status,
+          reviewPeriodLeft,
+        };
+      }
+      return acc;
+    }, {});
+
+    // attach to employees
+    const employeesWithData = employees.map((emp) => {
       const empObj = emp.toObject();
       empObj.currentMonthAvg = ratingsMap[emp._id.toString()] || null;
+      empObj.disciplinaryAction = actionsMap[emp._id.toString()] || {
+        type: null,
+        status: null,
+        reviewPeriodLeft: null,
+      };
       return empObj;
     });
 
@@ -74,7 +151,7 @@ const getEmployees = async (req, res) => {
       .status(200)
       .json(
         apiResponseSuccess(
-          employeesWithRating,
+          employeesWithData,
           true,
           statusCode.success,
           "Employees fetched successfully!"

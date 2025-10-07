@@ -22,10 +22,14 @@ const upsertPayroll = async (req, res) => {
       absent = 0,
       lateIn = 0,
       lateAdjusted = 0,
-      deductions = 0,
       reimbursement = 0,
       incentive = 0,
       teamIncentive = 0,
+      individualIncentive = 0,
+      companyIncentive = 0,
+      enableIndividualIncentive,
+      enableCompanyIncentive,
+      enableTeamIncentive,
       status,
     } = req.body;
 
@@ -64,11 +68,24 @@ const upsertPayroll = async (req, res) => {
     const perDaySalary =
       totalWorkingDays > 0 ? baseSalary / totalWorkingDays : 0;
     let calculatedPayable = perDaySalary * payableDays;
-    let finalPayable = calculatedPayable - deductions;
+
+    let finalPayable = calculatedPayable;
     if (finalPayable < 0) finalPayable = 0;
 
-    let total = finalPayable + reimbursement + incentive + teamIncentive;
+    // Calculate detailed deductions
+    const leaveDeduction = remainingLeaves * perDaySalary;
+    const lateDeduction = (lateIn - usableLateAdjusted) * 0.5 * perDaySalary;
+    const deductions = leaveDeduction + lateDeduction;
+
+    let total =
+      finalPayable +
+      reimbursement +
+      individualIncentive +
+      teamIncentive +
+      companyIncentive;
     if (total < 0) total = 0;
+
+    let totalIncentive = individualIncentive + teamIncentive + companyIncentive;
 
     // round currency to 2 decimals
     finalPayable = Number(finalPayable.toFixed(2));
@@ -94,8 +111,13 @@ const upsertPayroll = async (req, res) => {
           payableDays,
           payable: finalPayable,
           reimbursement,
-          incentive,
+          incentive: totalIncentive,
           teamIncentive,
+          individualIncentive,
+          companyIncentive,
+          enableIndividualIncentive,
+          enableCompanyIncentive,
+          enableTeamIncentive,
           total,
           bankName: employee.bankDetails?.bankName,
           accountNo: employee.bankDetails?.accountNo,
@@ -156,6 +178,12 @@ const listPayrollByEmployees = async (req, res) => {
         conveyanceAllowance: emp.salary.conveyanceAllowance || 0,
         salary: emp.salary?.ctc || 0,
         teamIncentive: payroll?.teamIncentive || 0,
+        individualIncentive: payroll?.individualIncentive || 0,
+        companyIncentive: payroll?.companyIncentive || 0,
+        enableIndividualIncentive: payroll?.enableIndividualIncentive || false,
+        enableTeamIncentive: payroll?.enableTeamIncentive || false,
+        enableCompanyIncentive: payroll?.enableCompanyIncentive || false,
+
         // if payroll exists → show, else show defaults
         payableDays: payroll?.payableDays || 0,
         payable: payroll?.payable || 0,
@@ -231,6 +259,12 @@ const getPayrollByEmployee = async (req, res) => {
       deductions: payroll?.deductions || 0,
       reimbursement: payroll?.reimbursement || 0,
       incentive: payroll?.incentive || 0,
+      teamIncentive: payroll?.teamIncentive || 0,
+      individualIncentive: payroll?.individualIncentive || 0,
+      companyIncentive: payroll?.companyIncentive || 0,
+      enableIndividualIncentive: payroll?.enableIndividualIncentive || false,
+      enableTeamIncentive: payroll?.enableTeamIncentive || false,
+      enableCompanyIncentive: payroll?.enableCompanyIncentive || false,
       payableDays: payroll?.payableDays || 0,
       payable: payroll?.payable || 0,
       teamIncentive: payroll?.teamIncentive || 0,

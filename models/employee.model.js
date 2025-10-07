@@ -41,6 +41,13 @@ const employeeSchema = new mongoose.Schema(
       designation: { type: String },
       joiningDate: { type: Date, default: Date.now },
       lastWorkingDay: { type: Date },
+      resignationDate: { type: Date },
+      reasonForSeparation: {
+        type: String,
+      },
+      noticePeriodDays: {
+        type: Number,
+      },
     },
 
     bankDetails: {
